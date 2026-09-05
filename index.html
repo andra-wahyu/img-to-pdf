@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PhotoPDF - Ubah Foto ke PDF dengan Aman</title>
+    <title>KlixPDF - Ubah Foto ke PDF dengan Aman</title>
     
     <!-- PWA Manifest via Data URI -->
     <link rel="manifest" id="manifest-link">
@@ -58,11 +58,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-file-pdf text-red-500 text-2xl"></i>
-                <h1 class="font-bold text-xl tracking-tight text-gray-900">Photo<span class="text-primary">PDF</span></h1>
+                <h1 class="font-bold text-xl tracking-tight text-gray-900">Klix<span class="text-primary">PDF</span></h1>
             </div>
             <div class="hidden sm:flex items-center gap-2 text-sm text-secondary bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
                 <i class="fa-solid fa-shield-halved"></i>
-                <span>Privasi Terjamin: File diproses secara offline dan tidak pernah diunggah ke server</span>
+                <span>Privasi Terjamin: File diproses secara offline dan tidak pernah diunggah ke server.</span>
             </div>
         </div>
     </header>
@@ -76,7 +76,7 @@
             <!-- Mobile Privacy Badge -->
             <div class="sm:hidden flex items-center gap-2 text-xs text-secondary bg-green-50 px-3 py-2 rounded-lg border border-green-100 mb-2">
                 <i class="fa-solid fa-shield-halved"></i>
-                <span>Privasi Terjamin: File diproses secara offline dan tidak pernah diunggah ke server</span>
+                <span>Privasi Terjamin: File diproses secara offline dan tidak pernah diunggah ke server.</span>
             </div>
 
             <!-- Dropzone -->
@@ -114,6 +114,17 @@
                 <h2 class="font-semibold text-lg text-gray-800 border-b pb-3 mb-4"><i class="fa-solid fa-gear mr-2 text-gray-500"></i>Pengaturan PDF</h2>
                 
                 <div class="space-y-4">
+                    <!-- Output Filename -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama File Output</label>
+                        <div class="flex shadow-sm rounded-md">
+                            <input type="text" id="outputFileName" value="KlixPDF-Export" placeholder="Masukkan nama file" class="flex-grow border-gray-300 rounded-l-md focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 py-2 px-3 border border-r-0 text-sm bg-white outline-none">
+                            <span class="inline-flex items-center px-3 rounded-r-md border border-gray-300 bg-gray-100 text-gray-600 text-sm font-medium cursor-not-allowed">
+                                .pdf
+                            </span>
+                        </div>
+                    </div>
+
                     <!-- Paper Size -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Ukuran Kertas</label>
@@ -135,7 +146,7 @@
                     </div>
 
                     <!-- Margin -->
-                    <div>
+                    <div id="marginWrapper">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Margin</label>
                         <select id="setMargin" class="w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-opacity-50 py-2 px-3 border text-sm bg-white">
                             <option value="0">Tidak Ada</option>
@@ -146,7 +157,7 @@
 
                     <!-- Image Fit -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Pencocokan Gambar</label>
+                        <label id="fitLabel" class="block text-sm font-medium text-gray-700 mb-1">Pencocokan Gambar</label>
                         <select id="setFit" class="w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-opacity-50 py-2 px-3 border text-sm bg-white">
                             <option value="fit">Fit (Pas ke halaman)</option>
                             <option value="fill">Fill (Penuhi halaman)</option>
@@ -224,6 +235,7 @@
         const btnGenerate = document.getElementById('btnGenerate');
         const paperSizeSelect = document.getElementById('setPaperSize');
         const orientationWrapper = document.getElementById('orientationWrapper');
+        const marginWrapper = document.getElementById('marginWrapper');
 
         // --- Event Listeners ---
         dropzone.addEventListener('dragover', (e) => {
@@ -248,10 +260,25 @@
         });
 
         paperSizeSelect.addEventListener('change', (e) => {
+            const fitSelect = document.getElementById('setFit');
+            const fitLabel = document.getElementById('fitLabel');
+
             if(e.target.value === 'original') {
                 orientationWrapper.classList.add('opacity-50', 'pointer-events-none');
+                marginWrapper.classList.add('opacity-50', 'pointer-events-none');
+                fitLabel.textContent = "Mode Lebar (Width)";
+                fitSelect.innerHTML = `
+                    <option value="uniform_width">Lebar Seragam (Ikuti foto pertama)</option>
+                    <option value="original_width">Lebar Asli (Beda-beda)</option>
+                `;
             } else {
                 orientationWrapper.classList.remove('opacity-50', 'pointer-events-none');
+                marginWrapper.classList.remove('opacity-50', 'pointer-events-none');
+                fitLabel.textContent = "Pencocokan Gambar";
+                fitSelect.innerHTML = `
+                    <option value="fit">Fit (Pas ke halaman)</option>
+                    <option value="fill">Fill (Penuhi halaman)</option>
+                `;
             }
         });
 
@@ -481,7 +508,7 @@
             const paperSize = document.getElementById('setPaperSize').value;
             const orientation = document.getElementById('setOrientation').value; // 'p' or 'l'
             const marginValue = parseInt(document.getElementById('setMargin').value);
-            const fitMode = document.getElementById('setFit').value; // 'fit' or 'fill'
+            const fitMode = document.getElementById('setFit').value; // 'fit', 'fill', 'uniform_width', 'original_width'
             const qualitySetting = document.getElementById('setQuality').value;
 
             // Determine Quality Scaling
@@ -501,6 +528,7 @@
             try {
                 const { jsPDF } = window.jspdf;
                 let doc = null;
+                let baseWidthMM = null; // Menyimpan lebar patokan dari foto pertama
 
                 for (let i = 0; i < sortedIds.length; i++) {
                     loadingProgress.textContent = `Memproses ${i + 1} dari ${sortedIds.length} foto`;
@@ -539,14 +567,22 @@
                     let pageW, pageH;
 
                     if (paperSize === 'original') {
-                        // In jsPDF, custom size is in points or mm. Let's use mm based on 72dpi standard or just pixel size scaled down.
-                        // Assuming 96dpi standard conversion: px * 25.4 / 96
+                        // Konversi pixel ke milimeter (asumsi 96 dpi standar)
                         const wMM = (origW * 25.4) / 96;
                         const hMM = (origH * 25.4) / 96;
-                        pageFormat = [wMM, hMM];
-                        pageOrient = wMM > hMM ? 'l' : 'p';
-                        pageW = wMM;
-                        pageH = hMM;
+                        
+                        if (fitMode === 'uniform_width') {
+                            if (i === 0) baseWidthMM = wMM; // Jadikan lebar foto pertama sebagai patokan
+                            pageW = baseWidthMM;
+                            pageH = hMM * (baseWidthMM / wMM); // Tinggi di-skala otomatis agar proporsional (tidak gepeng)
+                            pageFormat = [pageW, pageH];
+                            pageOrient = pageW > pageH ? 'l' : 'p';
+                        } else {
+                            pageFormat = [wMM, hMM];
+                            pageOrient = wMM > hMM ? 'l' : 'p';
+                            pageW = wMM;
+                            pageH = hMM;
+                        }
                     } else {
                         // Standard sizes
                         if (paperSize === 'a4') { pageW = 210; pageH = 297; }
@@ -572,10 +608,10 @@
                     let drawW, drawH, drawX, drawY;
 
                     if (paperSize === 'original') {
-                        drawW = workW;
-                        drawH = workH;
-                        drawX = finalMargin;
-                        drawY = finalMargin;
+                        drawW = pageW;
+                        drawH = pageH;
+                        drawX = 0; // Abaikan perhitungan margin agar memenuhi ujung kertas
+                        drawY = 0;
                     } else {
                         // Calculate ratio
                         const ratioW = workW / origW;
@@ -607,7 +643,14 @@
                 loadingProgress.textContent = "Menyimpan File PDF...";
                 await new Promise(r => setTimeout(r, 100)); // allow UI update
                 
-                doc.save('PhotoPDF-Export.pdf');
+                // Get filename from input
+                let fileNameInput = document.getElementById('outputFileName').value.trim();
+                // If user accidentally clear the input, fallback to default name
+                if (!fileNameInput) {
+                    fileNameInput = 'KlixPDF-Export';
+                }
+                
+                doc.save(`${fileNameInput}.pdf`);
 
             } catch (error) {
                 console.error(error);
@@ -622,8 +665,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             // 1. Create Manifest Dynamic for PWA
             const manifestData = {
-                name: "PhotoPDF Converter",
-                short_name: "PhotoPDF",
+                name: "KlixPDF Converter",
+                short_name: "KlixPDF",
                 description: "Ubah foto menjadi PDF secara offline dan aman.",
                 start_url: "./",
                 display: "standalone",
